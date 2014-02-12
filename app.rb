@@ -1,10 +1,15 @@
 require 'sinatra/base'
 require 'sinatra/json'
+require 'sinatra/reloader'
 require 'redis'
 require 'json'
 
 module Tock
   class App < Sinatra::Base
+
+    configure :development do
+      register Sinatra::Reloader
+    end
 
     get '/', :provides => :html do
       current_number = redis.get("number") || 0
