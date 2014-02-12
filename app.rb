@@ -11,7 +11,7 @@ module Tock
       register Sinatra::Reloader
     end
 
-    get '/', :provides => :html do
+    get /\A\/(?:current)?\Z/, :provides => :html do
       current_number = redis.get("number") || 0
       haml :index, :locals => { :current_number => current_number }
     end
