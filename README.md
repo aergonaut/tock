@@ -1,5 +1,7 @@
 # Tock
 
+![Tock](https://s3.amazonaws.com/that-old-black-magic/tollbooth.jpg)
+
 Tock helps you keep count of things.
 
 Tock can count just about anything. Just tell him what number to start at, and he'll happily count up for you for as long as you want.
