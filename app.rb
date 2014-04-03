@@ -24,14 +24,23 @@ module Tock
 
     post '/increment' do
       request.body.rewind
-      parsed_body = JSON.parse(request.body.read)
+      body = request.body.read
+      parsed_body = JSON.parse(body)
       new_note = parsed_body.fetch("note", "")
 
-      current = redis.get("number") || 0
-      current = current.to_i + 1
-      redis.set("number", current)
+      current = redis.incr("number")
       redis.set("note", new_note)
+      redis.rpush("note_log", "#{current}: #{new_note}")
       json "current" => current.to_s, "note" => new_note
+    end
+
+    post '/reset' do
+      request.body.rewind
+      parsed_body = JSON.parse(request.body.read)
+      old_number = redis.get("number")
+      new_number = parsed_body.fetch("number",0).to_i
+      redis.rpush("note_log", "#{old_number} --> reset to #{new_number}")
+      redis.set("number", new_number)
     end
 
     protected
