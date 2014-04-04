@@ -5,3 +5,7 @@
         The current number is
         %br/
         = current_number
+.row
+  .col-md-12
+    - note_log.each do |line|
+      %p= line

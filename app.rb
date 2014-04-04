@@ -14,7 +14,8 @@ module Tock
 
     get /\A\/(?:current)?\Z/, :provides => :html do
       current_number = redis.get("number") || 0
-      haml :index, :locals => { :current_number => current_number }
+      note_log = redis.lrange('note_log', 0, -1)
+      haml :index, :locals => { :current_number => current_number, :note_log=>note_log.reverse }
     end
 
     get /\A\/(?:current)?\Z/, :provides => :json do
