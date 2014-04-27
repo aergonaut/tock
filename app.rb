@@ -50,7 +50,7 @@ module Tock
       key = (parsed_body["key"].to_s.size > 0) ? "number.#{parsed_body["key"]}" : "number"
 
       old_number = redis.get(key)
-      new_number = parsed_body.fetch(key, 0).to_i
+      new_number = parsed_body.fetch("number", 0).to_i
       redis.rpush("note_log", "#{key} #{old_number} --> reset to #{new_number}")
       redis.set(key, new_number)
     end
