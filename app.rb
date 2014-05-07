@@ -3,6 +3,9 @@ require 'sinatra/json'
 require 'sinatra/reloader'
 require 'redis'
 require 'json'
+require 'uri'
+require 'net/http'
+require 'net/https'
 
 module Tock
   class App < Sinatra::Base
@@ -40,7 +43,7 @@ module Tock
 
       current = redis.incr(key)
       redis.set("note", new_note)
-      redis.rpush("note_log", "#{key=='number' ? current : "#{key.split('.').last} #{current}"}: #{new_note}")
+      note_log "#{key=='number' ? current : "#{key.split('.').last} #{current}"}: #{new_note}"
       json "current" => current.to_s, "note" => new_note
     end
 
@@ -51,11 +54,23 @@ module Tock
 
       old_number = redis.get(key)
       new_number = parsed_body.fetch("number", 0).to_i
-      redis.rpush("note_log", "#{key} #{old_number} --> reset to #{new_number}")
+      note_log "#{key} #{old_number} --> reset to #{new_number}"
       redis.set(key, new_number)
     end
 
     protected
+
+    def note_log str
+      redis.rpush("note_log", str)
+      begin
+        auth    = ENV['HIPCHAT_API_KEY']
+        room_id = URI::encode(ENV['HIPCHAT_ROOM'] || "Dev Notifications")
+        msg     = URI::encode(str)
+        uri = URI.parse "https://api.hipchat.com/v1/rooms/message?format=json&auth_token=#{auth}&notify=1&color=green&room_id=#{room_id}&from=Tock&message=#{msg}"
+        response = Net::HTTP.get_response(uri)
+      rescue
+      end
+    end
 
     def redis
       uri = URI.parse(ENV["REDISTOGO_URL"])
