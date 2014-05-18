@@ -7,3 +7,5 @@ gem 'sinatra-contrib'
 gem 'redis'
 gem 'haml'
 gem 'unicorn'
+gem 'rack-ssl'
+
