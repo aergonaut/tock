@@ -62,14 +62,6 @@ module Tock
 
     def note_log str
       redis.rpush("note_log", str)
-      begin
-        auth    = ENV['HIPCHAT_API_KEY']
-        room_id = URI::encode(ENV['HIPCHAT_ROOM'] || "Dev Notifications")
-        msg     = URI::encode(str)
-        uri = URI.parse "https://api.hipchat.com/v1/rooms/message?format=json&auth_token=#{auth}&notify=1&color=green&room_id=#{room_id}&from=Tock&message=#{msg}"
-        response = Net::HTTP.get_response(uri)
-      rescue
-      end
     end
 
     def redis
