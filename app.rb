@@ -13,8 +13,7 @@ module Tock
     configure :development do
       register Sinatra::Reloader
     end
-
-    get /\A\/(?:current)?\Z/, :provides => :html do
+    get '/:current?', :provides => :html do
       current_number = redis.get("number") || 0
       note_log = redis.lrange('note_log', 0, -1)
       other_numbers_keys = redis.keys("number.*")
@@ -25,7 +24,7 @@ module Tock
                                 :other_values => other_number_values }
     end
 
-    get /\A\/(?:current)?\Z/, :provides => :json do
+    get '/:current?', :provides => :json do
       current_number = redis.get("number") || 0
       note_log = redis.lrange('note_log', 0, -1)
       other_numbers_keys = redis.keys("number.*")
