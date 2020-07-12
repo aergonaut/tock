@@ -5,6 +5,13 @@
         The current number is
         %br/
         = current_number
+      .col-md-12
+        - if other_values && Array(other_values).size > 0
+          Other keys:
+          %br/
+          %ul
+            - other_values.each do |k,v|
+              %li= "#{k}: #{v}"
 .row
   .col-md-12
     - note_log.each do |line|

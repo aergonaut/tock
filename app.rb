@@ -3,7 +3,9 @@ require 'sinatra/json'
 require 'sinatra/reloader'
 require 'redis'
 require 'json'
-
+require 'uri'
+require 'net/http'
+require 'net/https'
 
 module Tock
   class App < Sinatra::Base
@@ -11,17 +13,24 @@ module Tock
     configure :development do
       register Sinatra::Reloader
     end
-
-    get /\A\/(?:current)?\Z/, :provides => :html do
+    get '/:current?', :provides => :html do
       current_number = redis.get("number") || 0
       note_log = redis.lrange('note_log', 0, -1)
-      haml :index, :locals => { :current_number => current_number, :note_log=>note_log.reverse }
+      other_numbers_keys = redis.keys("number.*")
+      other_number_values = Array(other_numbers_keys).inject({}) { |m,o| m[o] = redis.get(o); m }
+      haml :index, :locals => { :current_number => current_number,
+                                :note_log => note_log.reverse,
+                                :other_keys => other_numbers_keys,
+                                :other_values => other_number_values }
     end
 
-    get /\A\/(?:current)?\Z/, :provides => :json do
+    get '/:current?', :provides => :json do
       current_number = redis.get("number") || 0
-      note = redis.get("note") || ""
-      json "current" => current_number, "note" => note
+      note_log = redis.lrange('note_log', 0, -1)
+      other_numbers_keys = redis.keys("number.*")
+      other_number_values = Array(other_numbers_keys).inject({}) { |m,o| m[o] = redis.get(o); m }
+      json "current" => current_number, "note_log" => note_log.reverse,
+           "other_keys" => other_numbers_keys, "other_values" => other_number_values
     end
 
     post '/increment' do
@@ -29,23 +38,30 @@ module Tock
       body = request.body.read
       parsed_body = JSON.parse(body)
       new_note = parsed_body.fetch("note", "")
+      key = (parsed_body["key"].to_s.size > 0) ? "number.#{parsed_body["key"]}" : "number"
 
-      current = redis.incr("number")
+      current = redis.incr(key)
       redis.set("note", new_note)
-      redis.rpush("note_log", "#{current}: #{new_note}")
+      note_log "#{key=='number' ? current : "#{key.split('.').last} #{current}"}: #{new_note}"
       json "current" => current.to_s, "note" => new_note
     end
 
     post '/reset' do
       request.body.rewind
       parsed_body = JSON.parse(request.body.read)
-      old_number = redis.get("number")
-      new_number = parsed_body.fetch("number",0).to_i
-      redis.rpush("note_log", "#{old_number} --> reset to #{new_number}")
-      redis.set("number", new_number)
+      key = (parsed_body["key"].to_s.size > 0) ? "number.#{parsed_body["key"]}" : "number"
+
+      old_number = redis.get(key)
+      new_number = parsed_body.fetch("number", 0).to_i
+      note_log "#{key} #{old_number} --> reset to #{new_number}"
+      redis.set(key, new_number)
     end
 
     protected
+
+    def note_log str
+      redis.rpush("note_log", str)
+    end
 
     def redis
       uri = URI.parse(ENV["REDISTOGO_URL"])

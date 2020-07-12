@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
   "current": "42",
-  "note": "yolo"
+  "note_log": ["yolo", "i did this!"]
 }
 ```
 

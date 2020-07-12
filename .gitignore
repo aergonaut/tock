@@ -1,0 +1,6 @@
+*.swp
+*.org
+*.log
+*.rdb
+*.gz
+.env*
